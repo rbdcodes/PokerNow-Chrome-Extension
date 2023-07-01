@@ -9,45 +9,26 @@ async function run() {
 
   const page = await browser.newPage();
   await page.goto("https://www.pokernow.club/games/pgllpnoNjJQEynV1XgyeKteau");
-  console.log("1");
 
-  const title = await page.evaluate(() => document.title);
-  console.log(title);
-
-  const players = await page.evaluate(() => {
-    const seatDivs = document.querySelectorAll(
-      ".seats .table-player-name-container .table-player-name"
-    );
-    return Array.from(seatDivs).map((div) => div.innerHTML);
-    // return seatsDiv.innerHTML;
+  await page.exposeFunction("puppeteerLogMutation", () => {
+    console.log("Mutation Detected: A child node has been added or removed.");
   });
 
-  const playerDivs = await page.evaluate(() => {
-    const playerTags = document.querySelectorAll(".seats .table-player");
-    playerNames = [];
-    playerBets = [];
-    Array.from(playerTags).map((playerDiv) => {
-      if (!playerDiv.className.includes("table-player-seat")) {
-        const playerName = playerDiv.querySelector(
-          ".table-player-name-container .table-player-name"
-        );
+  await page.exposeFunction("printMe", (lul) => console.log(lul));
 
-        // const betAmountInBB = playerDiv.querySelector("p");
+  await page.evaluate(() => {
+    const target = document.querySelector(".seats .table-player");
 
-        const betAmountInBB = playerDiv.querySelector(
-          "p.table-player-bet-value"
-        );
-
-        const betAmount = betAmountInBB ? betAmountInBB.innerText : "No bet";
-
-        playerNames.push(`${playerName.innerHTML} bets ${betAmount}`);
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type == "childList" || mutation.type == "subtree") {
+          puppeteerLogMutation();
+        }
       }
     });
 
-    return playerNames;
+    observer.observe(target, { childList: true, subtree: true });
   });
-
-  console.log(playerDivs);
 }
 
 run();

@@ -1,3 +1,5 @@
-2023/05/30-07:51:58.114 53c8 Reusing MANIFEST C:\Users\DarkenedAsian\Coding\bot stuff\tmp\Default\Local Storage\leveldb/MANIFEST-000001
-2023/05/30-07:51:58.117 53c8 Recovering log #3
-2023/05/30-07:51:58.121 53c8 Reusing old log C:\Users\DarkenedAsian\Coding\bot stuff\tmp\Default\Local Storage\leveldb/000003.log 
+2023/07/01-13:42:29.945 64e8 Reusing MANIFEST C:\Users\DarkenedAsian\Coding\bot stuff\tmp\Default\Local Storage\leveldb/MANIFEST-000001
+2023/07/01-13:42:29.946 64e8 Recovering log #3
+2023/07/01-13:42:29.948 64e8 Level-0 table #3: started
+2023/07/01-13:42:29.957 64e8 Level-0 table #3: 47656 bytes OK
+2023/07/01-13:42:29.964 64e8 Delete type=0 #3
