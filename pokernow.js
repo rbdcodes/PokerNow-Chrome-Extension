@@ -1,11 +1,5 @@
 const puppeteer = require("puppeteer");
 
-function getPlayerNumber(playerTagClassName) {
-  const test = "table-player table-player-1 you-player ";
-  const classNameTokens = test.split(" ");
-  return classNameTokens[1];
-}
-
 async function run() {
   const browser = await puppeteer.launch({
     defaultViewport: false,
@@ -22,14 +16,18 @@ async function run() {
 
   await page.exposeFunction("printMe", (lul) => console.log(lul));
 
-  await page.exposeFunction("getPlayerNumber", getPlayerNumber());
+  await page.exposeFunction("getPlayerNumber", (playerTagClassName) => {
+    console.log(`playerTagClassName is ${playerTagClassName}`);
+    const classNameTokens = playerTagClassName.split(" ");
+    return classNameTokens[1];
+  });
 
   await page.evaluate(() => {
     const playerTags = document.querySelectorAll(".seats .table-player");
 
-    Array.from(playerTags).map((playerTag) => {
+    Array.from(playerTags).map(async (playerTag) => {
       if (!playerTag.className.includes("table-player-seat")) {
-        const playerNumber = getPlayerNumber(playerTag.className);
+        const playerNumber = await getPlayerNumber(playerTag.className);
 
         const observer = new MutationObserver((mutations) => {
           for (const mutation of mutations) {
@@ -39,7 +37,7 @@ async function run() {
           }
         });
 
-        observer.observe(target, { childList: true, subtree: true });
+        observer.observe(playerTag, { childList: true, subtree: true });
       }
     });
   });
