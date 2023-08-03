@@ -1,8 +1,8 @@
 const puppeteer = require("puppeteer");
 const axios = require("axios");
 
-const playerMap = {};
-const url = "https://www.pokernow.club/games/pglTRKRH2bLNid-P9B-PQIllY";
+let pastData = {};
+const url = "https://www.pokernow.club/games/pglSuDf-VkjAg-7QIEWYooL8E";
 
 async function run() {
   const browser = await puppeteer.launch({
@@ -22,6 +22,11 @@ async function run() {
         otherData: "some value",
         url: url,
       });
+
+      //
+      // console.log("Past successful request:", pastData.data);
+
+      // pastData = response;
 
       // Handle the response if needed
       console.log("POST request successful:", response.data);
@@ -48,7 +53,7 @@ async function run() {
 
         const observer = new MutationObserver(async (mutations) => {
           for (const mutation of mutations) {
-            if (mutation.type == "childList" || mutation.type == "subtree") {
+            if (mutation.type == "characterData") {
               // Perform POST request here
 
               await printMe(playerNumber);
@@ -56,7 +61,11 @@ async function run() {
           }
         });
 
-        observer.observe(playerTag, { childList: true, subtree: true });
+        observer.observe(playerTag, {
+          childList: true,
+          subtree: true,
+          characterData: true,
+        });
       }
     }
   });
