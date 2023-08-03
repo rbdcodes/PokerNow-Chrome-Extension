@@ -36,6 +36,10 @@ async function run() {
     }
   });
 
+  await page.exposeFunction("printMe2", (yup) => {
+    console.log(yup);
+  });
+
   await page.exposeFunction("getPlayerNumber", (playerTagClassName) => {
     console.log(`playerTagClassName is ${playerTagClassName}`);
     const classNameTokens = playerTagClassName.split(" ");
@@ -54,9 +58,28 @@ async function run() {
         const observer = new MutationObserver(async (mutations) => {
           for (const mutation of mutations) {
             if (mutation.type == "characterData") {
-              // Perform POST request here
-
+              // const targetElement = mutation.target; //might be crashing cuz mutation.target is diff
+              // const classList = targetElement.getAttribute("class");
+              printMe2("charData: " + mutation.target.textContent); //ahhh its also recognizing changes from chip stack
               await printMe(playerNumber);
+
+              // if (!classList.includes("winner")) {
+
+              // }
+            } else if (
+              mutation.type === "attributes" &&
+              mutation.attributeName === "class"
+            ) {
+              // Perform POST request here
+              const targetElement = mutation.target;
+              const classList = targetElement.getAttribute("class");
+              if (
+                classList.includes("fold") &&
+                !classList.includes("decision-current")
+              ) {
+                printMe2("attribute2");
+                printMe2(playerNumber + " has folded");
+              }
             }
           }
         });
@@ -65,6 +88,8 @@ async function run() {
           childList: true,
           subtree: true,
           characterData: true,
+          attributes: true,
+          attributeFilter: ["class"],
         });
       }
     }
