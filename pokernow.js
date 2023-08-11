@@ -2,7 +2,7 @@ const puppeteer = require("puppeteer");
 const axios = require("axios");
 
 let pastData = {};
-const url = "https://www.pokernow.club/games/pglz55sAzmb_Vg_Zx5jTP5jCZ";
+const url = "https://www.pokernow.club/games/pglfpk8tOBrj-pXM8HbVa8nDY";
 
 async function run() {
   const browser = await puppeteer.launch({
@@ -53,24 +53,35 @@ async function run() {
               const classMutationOriginatedFrom =
                 mutation.target.parentNode.parentNode.parentNode.classList;
 
+              printMe2(
+                "characterData is: " +
+                  classMutationOriginatedFrom +
+                  " from " +
+                  playerNumber
+              );
+
               if (
                 classMutationOriginatedFrom.contains("table-player-bet-value")
               ) {
-                printMe2("charData: " + classMutationOriginatedFrom); //ahhh its also recognizing changes from chip stack
                 await printMe(playerNumber);
               }
             } else if (
               mutation.type === "attributes" &&
               mutation.attributeName === "class"
             ) {
+              printMe2("Attributes: " + mutation.target.classList);
+              const divElementToSeeIfPlayerChecked =
+                mutation.target.childNodes.item(2).classList;
+
               const targetElement = mutation.target;
               const classList = targetElement.getAttribute("class");
               if (
                 classList.includes("fold") &&
                 !classList.includes("decision-current")
               ) {
-                printMe2("attribute2");
                 printMe2(playerNumber + " has folded");
+              } else if (divElementToSeeIfPlayerChecked.contains("check")) {
+                printMe2(playerNumber + " has checked");
               }
             }
           }
