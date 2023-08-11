@@ -53,23 +53,13 @@ async function run() {
               const classMutationOriginatedFrom =
                 mutation.target.parentNode.parentNode.parentNode.classList;
 
-              printMe2(
-                "characterData is: " +
-                  classMutationOriginatedFrom +
-                  " from " +
-                  playerNumber
-              );
-
-              if (
-                classMutationOriginatedFrom.contains("table-player-bet-value")
-              ) {
+              if (classMutationOriginatedFrom.contains("table-player-stack")) {
                 await printMe(playerNumber);
               }
             } else if (
               mutation.type === "attributes" &&
               mutation.attributeName === "class"
             ) {
-              printMe2("Attributes: " + mutation.target.classList);
               const divElementToSeeIfPlayerChecked =
                 mutation.target.childNodes.item(2).classList;
 
