@@ -2,7 +2,7 @@ const puppeteer = require("puppeteer");
 const axios = require("axios");
 
 let pastData = {};
-const url = "https://www.pokernow.club/games/pglfpk8tOBrj-pXM8HbVa8nDY";
+const url = "https://www.pokernow.club/games/pgls8RQASbPWp16AD_rn5DtUB";
 
 async function run() {
   const browser = await puppeteer.launch({
@@ -54,7 +54,12 @@ async function run() {
                 mutation.target.parentNode.parentNode.parentNode.classList;
 
               if (classMutationOriginatedFrom.contains("table-player-stack")) {
-                await printMe(playerNumber);
+                const oldStackSize = mutation.oldValue;
+                const currentStackSize = mutation.target.nodeValue;
+                if (oldStackSize > currentStackSize) {
+                  //make sure callback comes from bet, not player winning pot
+                  await printMe(playerNumber);
+                }
               }
             } else if (
               mutation.type === "attributes" &&
@@ -81,12 +86,37 @@ async function run() {
           childList: true,
           subtree: true,
           characterData: true,
+          characterDataOldValue: true,
           attributes: true,
           attributeFilter: ["class"],
         });
       }
     }
   });
+
+  //add mutationObserver to board
+  const testTag = await page.evaluate(async () => {
+    const runOutTag = document.querySelector(".table .table-cards.run-1");
+    printMe2("test1");
+
+    const observer = new MutationObserver(async (mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === "childList") {
+          printMe2("first: " + mutation.addedNodes[0].textContent);
+        }
+      }
+    });
+
+    observer.observe(runOutTag, {
+      childList: true,
+    });
+
+    // return runOutTag.innerHTML;
+  });
+
+  // console.log(testTag);
+
+  // console.log("testTag is: " + testTag);
 }
 
 run();

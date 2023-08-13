@@ -45,7 +45,6 @@ app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
 
-// Function to scrape player information
 async function scrapePlayerInfo(page, currentPlayer) {
   const data = await page.evaluate((currentPlayer) => {
     const playerTags = document.querySelectorAll(".seats .table-player");
