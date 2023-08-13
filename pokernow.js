@@ -56,8 +56,9 @@ async function run() {
               if (classMutationOriginatedFrom.contains("table-player-stack")) {
                 const oldStackSize = mutation.oldValue;
                 const currentStackSize = mutation.target.nodeValue;
+
+                //make sure callback comes from bet, not player winning pot
                 if (oldStackSize > currentStackSize) {
-                  //make sure callback comes from bet, not player winning pot
                   await printMe(playerNumber);
                 }
               }
@@ -97,12 +98,20 @@ async function run() {
   //add mutationObserver to board
   const testTag = await page.evaluate(async () => {
     const runOutTag = document.querySelector(".table .table-cards.run-1");
-    printMe2("test1");
 
     const observer = new MutationObserver(async (mutations) => {
       for (const mutation of mutations) {
         if (mutation.type === "childList") {
           printMe2("first: " + mutation.addedNodes[0].textContent);
+          const lastCommunityCardDealtDiv =
+            mutation.addedNodes[0].previousSibling;
+          const numberOfCommunityCards = mutation.target.childNodes.length;
+          if (!lastCommunityCardDealtDiv || numberOfCommunityCards > 3) {
+            //flop
+            printMe2("checkkkkkkk");
+          } else {
+            printMe2("theres prior: " + prior.textContent);
+          }
         }
       }
     });
