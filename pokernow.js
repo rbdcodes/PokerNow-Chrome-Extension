@@ -28,12 +28,13 @@ async function run() {
     }
   });
 
-  await page.exposeFunction("getCurrentPlayer", async () => {
+  await page.exposeFunction("getCurrentPlayer", async (isFlop) => {
     try {
       const response = await axios.post("http://localhost:3000/currentPlayer", {
         playerNumber: 1,
         otherData: "some value",
         url: url,
+        isFlop: isFlop,
       });
 
       console.log("GET request successful: ", response.data.playerNumber);
@@ -120,12 +121,14 @@ async function run() {
           const lastCommunityCardDealtDiv =
             mutation.addedNodes[0].previousSibling;
           const numberOfCommunityCards = mutation.target.childNodes.length;
-          if (!lastCommunityCardDealtDiv || numberOfCommunityCards > 3) {
-            //flop
-            getCurrentPlayer();
-            printMe2("checkkkkkkk");
-          } else {
-            printMe2("theres prior: " + prior.textContent);
+          if (!lastCommunityCardDealtDiv) {
+            printMe2("flop");
+
+            getCurrentPlayer(true);
+          } else if (numberOfCommunityCards > 3) {
+            printMe2("post flop");
+
+            getCurrentPlayer(false);
           }
         }
       }

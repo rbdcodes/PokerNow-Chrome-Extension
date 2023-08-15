@@ -47,7 +47,10 @@ app.post("/currentPlayer", async (req, res) => {
     const page = await browser.newPage();
     await page.goto(url);
 
-    const playerSeatNumber = await scrapeCurrentPlayerName(page);
+    const playerSeatNumber = await scrapeCurrentPlayerName(
+      page,
+      req.body.isFlop
+    );
 
     await browser.close();
 
@@ -70,16 +73,28 @@ app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
 
-async function scrapeCurrentPlayerName(page) {
-  const currentPlayerSeatNumber = await page.evaluate(() => {
+async function scrapeCurrentPlayerName(page, isFlop) {
+  const currentPlayerSeatNumber = await page.evaluate((isFlop) => {
+    const buttonTag = document.querySelector(".dealer-button-ctn");
+    const bToken = buttonTag.className.split(" ");
+    const bpToken = bToken[1].split("-");
+    const bpNumber = bpToken[2];
+
     const playerTags = document.querySelectorAll(".seats .table-player");
+
+    const playerTagsArrayWithFolds = Array.from(playerTags).filter(
+      (player) => !player.className.includes("table-player-seat")
+    );
+
     const playerTagsArray = Array.from(playerTags).filter(
       (player) =>
         !player.className.includes("table-player-seat") &&
         !player.className.includes("fold")
     );
 
+    let pFoldLength = playerTagsArrayWithFolds.length;
     let pLength = playerTagsArray.length;
+
     //in case first person is current decision, can always track last person (person who checked)
     let lastPlayer = playerTagsArray.at(pLength - 1).className;
     let currentPlayerTag = "test";
@@ -88,23 +103,38 @@ async function scrapeCurrentPlayerName(page) {
     namesTest["length"] = pLength;
     namesTest["last"] = lastPlayer;
 
-    for (let i = 0; i < pLength; i++) {
-      const cPlayer = playerTagsArray.at(i).className;
-      namesTest[i] = cPlayer;
-      // namesTest[i] = cPlayer;
-      // namesTest[i] = cPlayer;
-      // namesTest[i - 100] = lastPlayer;
-      if (cPlayer.includes("decision-current")) {
-        currentPlayerTag = lastPlayer;
-        break;
+    if (isFlop) {
+      let i = 0;
+      while (true) {
+        const cPlayer = playerTagsArray.at(i).className;
+        if (cPlayer.includes(bpNumber)) {
+          i += 2;
+          if ((i) => pFoldLength) {
+            i = i - pFoldLength;
+          }
+          break;
+        }
+        i++;
       }
-      lastPlayer = playerTagsArray.at(i).className;
+      cPTest = playerTagsArrayWithFolds.at(i);
+      currentPlayerTag = cPTest.className;
+    } else {
+      // request coming from checks closing action on flop or turn
+      for (let i = 0; i < pLength; i++) {
+        const cPlayer = playerTagsArray.at(i).className;
+        namesTest[i] = cPlayer;
+        if (cPlayer.includes("decision-current")) {
+          currentPlayerTag = lastPlayer;
+          break;
+        }
+        lastPlayer = playerTagsArray.at(i).className;
+      }
     }
 
     const tokens = currentPlayerTag.split(" ");
     namesTest[27] = tokens[1];
-    return tokens[1];
-  });
+    return { name: tokens[1], test: isFlop, button: bpNumber };
+  }, isFlop);
 
   console.log("currentPlayerNumber: " + currentPlayerSeatNumber);
 
