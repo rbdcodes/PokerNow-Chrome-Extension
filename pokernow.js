@@ -2,7 +2,7 @@ const puppeteer = require("puppeteer");
 const axios = require("axios");
 
 let pastData = {};
-const url = "https://www.pokernow.club/games/pgls8RQASbPWp16AD_rn5DtUB";
+const url = "https://www.pokernow.club/games/pglZRXbYbvcx3uvsYixuWE-08";
 
 async function run() {
   const browser = await puppeteer.launch({
@@ -23,6 +23,20 @@ async function run() {
       });
 
       console.log("POST request successful:", response.data);
+    } catch (error) {
+      console.error("Error sending POST request:", error.message);
+    }
+  });
+
+  await page.exposeFunction("getCurrentPlayer", async () => {
+    try {
+      const response = await axios.post("http://localhost:3000/currentPlayer", {
+        playerNumber: 1,
+        otherData: "some value",
+        url: url,
+      });
+
+      console.log("GET request successful: ", response.data.playerNumber);
     } catch (error) {
       console.error("Error sending POST request:", error.message);
     }
@@ -108,6 +122,7 @@ async function run() {
           const numberOfCommunityCards = mutation.target.childNodes.length;
           if (!lastCommunityCardDealtDiv || numberOfCommunityCards > 3) {
             //flop
+            getCurrentPlayer();
             printMe2("checkkkkkkk");
           } else {
             printMe2("theres prior: " + prior.textContent);
@@ -119,13 +134,7 @@ async function run() {
     observer.observe(runOutTag, {
       childList: true,
     });
-
-    // return runOutTag.innerHTML;
   });
-
-  // console.log(testTag);
-
-  // console.log("testTag is: " + testTag);
 }
 
 run();
