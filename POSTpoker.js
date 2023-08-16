@@ -49,8 +49,6 @@ app.post("/currentPlayer", async (req, res) => {
 
     const checkEndedAction = await scrapeLastActionFromLog(page);
 
-    console.log(`checkEnd is ${checkEndedAction}`);
-
     let playerSeatNumber = await scrapeCurrentPlayerName(page, req.body.isFlop);
     await browser.close();
 

@@ -117,18 +117,13 @@ async function run() {
     const observer = new MutationObserver(async (mutations) => {
       for (const mutation of mutations) {
         if (mutation.type === "childList") {
-          printMe2("first: " + mutation.addedNodes[0].textContent);
           const lastCommunityCardDealtDiv =
             mutation.addedNodes[0].previousSibling;
           const numberOfCommunityCards = mutation.target.childNodes.length;
           if (!lastCommunityCardDealtDiv) {
-            printMe2("flop");
-
-            getCurrentPlayer(true);
+            getCurrentPlayer(true); //pf -> flop
           } else if (numberOfCommunityCards > 3) {
-            printMe2("post flop");
-
-            getCurrentPlayer(false);
+            getCurrentPlayer(false); //flop -> turn, turn -> river
           }
         }
       }
