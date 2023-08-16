@@ -2,7 +2,7 @@ const puppeteer = require("puppeteer");
 const axios = require("axios");
 
 let pastData = {};
-const url = "https://www.pokernow.club/games/pglZRXbYbvcx3uvsYixuWE-08";
+const url = "https://www.pokernow.club/games/pglpMEniw6iPcnd16UlSSaZfM";
 
 async function run() {
   const browser = await puppeteer.launch({
@@ -37,7 +37,7 @@ async function run() {
         isFlop: isFlop,
       });
 
-      console.log("GET request successful: ", response.data.playerNumber);
+      console.log("POST request successful: ", response.data);
     } catch (error) {
       console.error("Error sending POST request:", error.message);
     }

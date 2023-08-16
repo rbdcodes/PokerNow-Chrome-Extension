@@ -47,18 +47,19 @@ app.post("/currentPlayer", async (req, res) => {
     const page = await browser.newPage();
     await page.goto(url);
 
-    const playerSeatNumber = await scrapeCurrentPlayerName(
-      page,
-      req.body.isFlop
-    );
+    const checkEndedAction = await scrapeLastActionFromLog(page);
 
+    console.log(`checkEnd is ${checkEndedAction}`);
+
+    let playerSeatNumber = await scrapeCurrentPlayerName(page, req.body.isFlop);
     await browser.close();
 
-    console.log("GET request received: ");
+    console.log("POST request received: ");
     res.status(200).json({
-      message: "get requested received",
+      message: "POST requested received",
       playerNumber: playerSeatNumber,
       url: url,
+      checkEndedAction: checkEndedAction,
     });
   } catch (error) {
     console.error("Error occurred: ", error);
@@ -72,6 +73,47 @@ app.post("/currentPlayer", async (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
+
+async function scrapeLastActionFromLog(page) {
+  const checkEndedAction = await page.evaluate(async () => {
+    const logButtonTag = await document.querySelector(
+      ".button-1.show-log-button.small-button.dark-gray"
+    );
+
+    logButtonTag.click();
+
+    // Add a 1-second delay
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    const textLogTag = document.querySelector(
+      ".modal-overlay .log-modal-body .log-modal-entries"
+    );
+
+    // Get the first 5 child nodes
+    const firstFiveChildNodes = Array.from(textLogTag.childNodes).slice(0, 10);
+
+    // Create an array from the innerHTML of the first 5 child nodes
+    const textArray = firstFiveChildNodes.map((node) => node.className);
+
+    let lastActionClass = "No player";
+
+    //identify where board is and return next index
+    //log behavior isnt dterministic since its asynchronous, so index of last action is dynamic
+    for (let i = 0; i < textArray.length; i++) {
+      //space necessary class is " entry-ctn" not "entry-ctn"
+      if (textArray[i] === " entry-ctn") {
+        lastActionClass = textArray[i + 1];
+        break;
+      }
+    }
+
+    const checkEndedAction = lastActionClass.includes("entry-check");
+
+    return checkEndedAction;
+  });
+
+  return checkEndedAction;
+}
 
 async function scrapeCurrentPlayerName(page, isFlop) {
   const currentPlayerSeatNumber = await page.evaluate((isFlop) => {
@@ -132,11 +174,8 @@ async function scrapeCurrentPlayerName(page, isFlop) {
     }
 
     const tokens = currentPlayerTag.split(" ");
-    namesTest[27] = tokens[1];
-    return { name: tokens[1], test: isFlop, button: bpNumber };
+    return { name: tokens[1], isFlop: isFlop, button: bpNumber };
   }, isFlop);
-
-  console.log("currentPlayerNumber: " + currentPlayerSeatNumber);
 
   return currentPlayerSeatNumber;
 }
