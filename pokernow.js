@@ -117,9 +117,26 @@ async function run() {
     const observer = new MutationObserver(async (mutations) => {
       for (const mutation of mutations) {
         if (mutation.type === "childList") {
-          const lastCommunityCardDealtDiv =
-            mutation.addedNodes[0].previousSibling;
-          const numberOfCommunityCards = mutation.target.childNodes.length;
+          const endOfHand = mutation.removedNodes.length > 0 ? true : false;
+
+          printMe2(
+            "removed nodes: " +
+              mutation.removedNodes[0].innerText +
+              " endofHand: " +
+              endOfHand
+          );
+
+          //code is probs getting stuck here
+          let lastCommunityCardDealtDiv = "";
+          let numberOfCommunityCards = "";
+
+          if (endOfHand === true) {
+            printMe2("end of hand");
+          } else {
+            lastCommunityCardDealtDiv = mutation.addedNodes[0].previousSibling;
+            numberOfCommunityCards = mutation.target.childNodes.length;
+          }
+
           if (!lastCommunityCardDealtDiv) {
             getCurrentPlayer(true); //pf -> flop
           } else if (numberOfCommunityCards > 3) {
