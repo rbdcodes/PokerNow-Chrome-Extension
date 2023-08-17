@@ -22,6 +22,12 @@ app.post("/", async (req, res) => {
 
     // Perform scraping using page.evaluate
     const data = await scrapePlayerInfo(page, currentPlayer);
+    const actionType = await scrapePlayerActionType(page, data.playerName);
+    data["actionType"] = actionType.actionType;
+    data["playerBet"] = actionType.playerBet;
+
+    //take name from data and check log ot see what action player did
+    // account for ege cases like blinds
 
     await browser.close();
 
@@ -71,6 +77,69 @@ app.post("/currentPlayer", async (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
+
+async function scrapePlayerActionType(page, playerName) {
+  const actionType = await page.evaluate(async (playerName) => {
+    const logButtonTag = document.querySelector(
+      ".button-1.show-log-button.small-button.dark-gray"
+    );
+
+    logButtonTag.click();
+
+    // Add a 1-second delay
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    const textLogTag = document.querySelector(
+      ".modal-overlay .log-modal-body .log-modal-entries"
+    );
+
+    // Get the first 10 child nodes
+    const firstTenChildNodes = Array.from(textLogTag.childNodes).slice(0, 10);
+
+    // Create an array from the innerText of the <p class="content"> tag in each child node from Log
+    const textArray = firstTenChildNodes.map((node) => {
+      const pTag = node.querySelector("p.content");
+      return pTag ? pTag.innerText : "";
+    });
+
+    const passedInPlayerName = playerName;
+
+    let tLength = textArray.length;
+
+    for (let i = 0; i < tLength; i++) {
+      const actionLogText = textArray.at(i);
+      const tokensFromPlayeraction = actionLogText.split(" ");
+      const scrapedPlayerName = tokensFromPlayeraction[0];
+      if (scrapedPlayerName === passedInPlayerName) {
+        let actionType = "N/A";
+        let playerBet = "N/A";
+        if (actionLogText.includes("calls")) {
+          actionType = "call";
+          playerBet = tokensFromPlayeraction[2];
+        } else if (actionLogText.includes("bets")) {
+          actionType = "bet";
+          playerBet = tokensFromPlayeraction[2];
+        } else if (actionLogText.includes("raises to")) {
+          actionType = "raise";
+          playerBet = tokensFromPlayeraction[3];
+        } else if (actionLogText.includes("posts a")) {
+          actionType = "blind";
+        }
+
+        return {
+          index: i,
+          name: scrapedPlayerName,
+          actionType: actionType,
+          playerBet: playerBet,
+        };
+      }
+    }
+
+    return "Couldn't find player";
+  }, playerName);
+
+  return { actionType: actionType.actionType, playerBet: actionType.playerBet };
+}
 
 async function scrapeLastActionFromLog(page) {
   const checkEndedAction = await page.evaluate(async () => {
@@ -194,19 +263,18 @@ async function scrapePlayerInfo(page, currentPlayer) {
       ".table-player-infos-ctn .table-player-name"
     );
 
-    const playerBetAmountDiv = playerDiv.querySelector(
-      "p.table-player-bet-value"
-    );
-
-    const playerBetAmount = playerBetAmountDiv
-      ? playerBetAmountDiv.innerText
-      : "No Bet";
-
     return {
-      playerBet: playerBetAmount,
       playerSeat: currentPlayer,
       playerName: playerName.innerText,
     };
+
+    // const playerBetAmountDiv = playerDiv.querySelector(
+    //   "p.table-player-bet-value"
+    // );
+
+    // const playerBetAmount = playerBetAmountDiv
+    //   ? playerBetAmountDiv.innerText
+    //   : "No Bet";
   }, currentPlayer);
 
   return data;

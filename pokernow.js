@@ -2,7 +2,7 @@ const puppeteer = require("puppeteer");
 const axios = require("axios");
 
 let pastData = {};
-const url = "https://www.pokernow.club/games/pglpMEniw6iPcnd16UlSSaZfM";
+const url = "https://www.pokernow.club/games/pglPG8z9-28wCrb8Q33bZBY7r";
 
 async function run() {
   const browser = await puppeteer.launch({
