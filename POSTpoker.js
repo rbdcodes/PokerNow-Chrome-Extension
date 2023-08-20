@@ -26,13 +26,10 @@ app.post("/", async (req, res) => {
     data["actionType"] = actionType.actionType;
     data["playerBet"] = actionType.playerBet;
 
-    //take name from data and check log ot see what action player did
-    // account for ege cases like blinds
-
     await browser.close();
 
     console.log("post request received");
-    console.log("Scraped data:", data);
+    // console.log("Scraped data:", data);
 
     res.status(200).json({
       message: "Post request received and data scraped successfully",
@@ -60,9 +57,7 @@ app.post("/currentPlayer", async (req, res) => {
 
     console.log("POST request received: ");
     res.status(200).json({
-      message: "POST requested received",
       playerNumber: playerSeatNumber,
-      url: url,
       checkEndedAction: checkEndedAction,
     });
   } catch (error) {

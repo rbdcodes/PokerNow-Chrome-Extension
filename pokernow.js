@@ -1,8 +1,7 @@
 const puppeteer = require("puppeteer");
 const axios = require("axios");
 
-let pastData = {};
-const url = "https://www.pokernow.club/games/pglPG8z9-28wCrb8Q33bZBY7r";
+const url = "https://www.pokernow.club/games/pglCJe7QqKiqJJvcb0CD_uLll";
 
 async function run() {
   const browser = await puppeteer.launch({
@@ -24,7 +23,7 @@ async function run() {
 
       console.log("POST request successful:", response.data);
     } catch (error) {
-      console.error("Error sending POST request:", error.message);
+      console.error("Error sending POST request: 1", error.message);
     }
   });
 
@@ -39,7 +38,7 @@ async function run() {
 
       console.log("POST request successful: ", response.data);
     } catch (error) {
-      console.error("Error sending POST request:", error.message);
+      console.error("Error sending POST request: 2", error.message);
     }
   });
 
@@ -86,11 +85,14 @@ async function run() {
 
               const targetElement = mutation.target;
               const classList = targetElement.getAttribute("class");
+
               if (
                 classList.includes("fold") &&
                 !classList.includes("decision-current")
               ) {
                 printMe2(playerNumber + " has folded");
+              } else if (classList.includes("winner")) {
+                printMe2(playerNumber + " has won, hand ended");
               } else if (divElementToSeeIfPlayerChecked.contains("check")) {
                 printMe2(playerNumber + " has checked");
               }
@@ -119,20 +121,10 @@ async function run() {
         if (mutation.type === "childList") {
           const endOfHand = mutation.removedNodes.length > 0 ? true : false;
 
-          printMe2(
-            "removed nodes: " +
-              mutation.removedNodes[0].innerText +
-              " endofHand: " +
-              endOfHand
-          );
-
-          //code is probs getting stuck here
           let lastCommunityCardDealtDiv = "";
           let numberOfCommunityCards = "";
 
-          if (endOfHand === true) {
-            printMe2("end of hand");
-          } else {
+          if (endOfHand === false) {
             lastCommunityCardDealtDiv = mutation.addedNodes[0].previousSibling;
             numberOfCommunityCards = mutation.target.childNodes.length;
           }
