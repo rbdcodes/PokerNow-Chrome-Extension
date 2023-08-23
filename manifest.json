@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "PopulateUI",
+  "version": "1.0.1",
+  "permissions": [
+    "background",
+    "tabs",
+    "webRequest",
+    "nativeMessaging",
+    "scripting",
+    "activeTab",
+    "bookmarks"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://*.pokernow.club/*"],
+      "js": ["UI/content.js"],
+      "css": ["UI/styles.css"]
+    }
+  ],
+
+  "background": {
+    "service_worker": "UI/background.js",
+    "type": "module"
+  }
+}

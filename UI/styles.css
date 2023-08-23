@@ -1,0 +1,17 @@
+.actionContainer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  padding: 2px;
+}
+
+.component-list27 {
+  display: flex;
+  flex-direction: row;
+}
+
+.component27 {
+  border: 1px solid #ccc;
+  padding: 5px;
+}
