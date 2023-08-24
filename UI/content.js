@@ -6,32 +6,118 @@ const addButton = document.createElement("button");
 addButton.textContent = "add";
 addButton.id = "addButton";
 
-const action2 = document.createElement("div");
-action2.textContent = "lul";
-action2.classList.add("component27");
-
-const action1 = document.createElement("div");
-action1.textContent = "lul";
-action1.classList.add("component27");
-
-addButton.addEventListener("click", () => {
-  const newComponent = document.createElement("div");
-  newComponent.className = "component27";
-  newComponent.textContent = "lul";
-  elem.appendChild(newComponent);
-});
-
 elem.appendChild(addButton);
-elem.appendChild(action1);
-elem.appendChild(action2);
 
 window.onload = function () {
   // Your code here
   console.log("yum");
   let containerDiv = document.querySelector(".table-player.table-player-1");
-
   containerDiv.appendChild(elem);
+
+  //find pot
+  const potTag = document.querySelector(".table-pot-size");
+
+  const observer = new MutationObserver(async (mutations) => {
+    for (const mutation of mutations) {
+      if (mutation.type == "characterData") {
+        console.log(
+          mutation.target.parentNode.parentNode.parentNode.className +
+            ": " +
+            mutation.target.nodeValue +
+            ", " +
+            mutation.oldValue
+        );
+
+        const potClassName =
+          mutation.target.parentNode.parentNode.parentNode.className;
+
+        const communityCardsTag = await document.querySelector(
+          ".table-cards.run-1"
+        );
+        const numberOfCommunityCards = communityCardsTag.childElementCount
+          ? communityCardsTag.childNodes.length
+          : -1;
+
+        if (
+          potClassName.includes("add-on") &&
+          numberOfCommunityCards == -1 &&
+          mutation.target.nodeValue == 0
+        ) {
+          console.log("hand ended during preflop");
+        } else if (
+          potClassName.includes("main-value") &&
+          mutation.target.nodeValue == 0
+        ) {
+          console.log("hand ended from postFlop");
+        }
+      }
+    }
+  });
+
+  observer.observe(potTag, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+    characterDataOldValue: true,
+    attributes: true,
+    attributeFilter: ["class"],
+  });
 };
+
+addButton.addEventListener("click", async () => {
+  const playerTags = Array.from(
+    document.querySelectorAll(".seats .table-player")
+  ).filter((playerTag) => !playerTag.className.includes("table-player-seat"));
+
+  for (const playerTag of playerTags) {
+    // if (!playerTag.className.includes("table-player-seat")) {
+    const playerNumber = await getPlayerNumber(playerTag.className);
+    // console.log(playerNumber);
+
+    const observer = new MutationObserver(async (mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type == "characterData") {
+          const classMutationOriginatedFrom =
+            mutation.target.parentNode.parentNode.parentNode.classList;
+
+          if (classMutationOriginatedFrom.contains("table-player-stack")) {
+            const oldStackSize = mutation.oldValue;
+            const currentStackSize = mutation.target.nodeValue;
+
+            //make sure callback comes from bet, not player winning pot
+            if (oldStackSize > currentStackSize) {
+              const playerBetTagToSearchFor = `.${playerNumber} .table-player-bet-value`;
+              const betValueTag = document.querySelector(
+                playerBetTagToSearchFor
+              );
+
+              console.log(`${playerNumber} bets ${betValueTag.innerText}`);
+            }
+          }
+        }
+      }
+    });
+
+    observer.observe(playerTag, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      characterDataOldValue: true,
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+    // }
+  }
+
+  // observer.observe(containerDiv, { childList: true });
+
+  console.log("click");
+});
+
+async function getPlayerNumber(playerTagClassName) {
+  const classNameTokens = playerTagClassName.split(" ");
+  return Promise.resolve(classNameTokens[1]);
+}
 
 chrome.runtime.sendMessage({ message: "testtt from content" }, (response) => {
   console.log(`from runTime sendMessage: ${response.message}`);
@@ -39,10 +125,10 @@ chrome.runtime.sendMessage({ message: "testtt from content" }, (response) => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log(`From onMessage!: ${message}`);
-  const newComponent = document.createElement("div");
-  newComponent.className = "component27";
-  newComponent.textContent = "lul";
-  elem.appendChild(newComponent);
+  // const newComponent = document.createElement("div");
+  // newComponent.className = "component27";
+  // newComponent.textContent = "lul";
+  // elem.appendChild(newComponent);
 
   sendResponse({ message: "response from content js" });
 });
