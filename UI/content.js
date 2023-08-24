@@ -20,14 +20,6 @@ window.onload = function () {
   const observer = new MutationObserver(async (mutations) => {
     for (const mutation of mutations) {
       if (mutation.type == "characterData") {
-        console.log(
-          mutation.target.parentNode.parentNode.parentNode.className +
-            ": " +
-            mutation.target.nodeValue +
-            ", " +
-            mutation.oldValue
-        );
-
         const potClassName =
           mutation.target.parentNode.parentNode.parentNode.className;
 
@@ -45,8 +37,10 @@ window.onload = function () {
           potClassName.includes("main-value") && mutation.target.nodeValue == 0;
 
         if (handEndedPreflop) {
+          addObserverToPlayerTags();
           console.log("hand ended during preflop");
         } else if (handEndedPostFlop) {
+          addObserverToPlayerTags();
           console.log("hand ended from postFlop");
         }
       }
@@ -64,6 +58,10 @@ window.onload = function () {
 };
 
 addButton.addEventListener("click", async () => {
+  console.log("clickk");
+});
+
+function addObserverToPlayerTags() {
   const playerTags = Array.from(
     document.querySelectorAll(".seats .table-player")
   ).filter((playerTag) => !playerTag.className.includes("table-player-seat"));
@@ -74,29 +72,12 @@ addButton.addEventListener("click", async () => {
       !observedElements.has(playerTag)
     ) {
       observedElements.add(playerTag);
-      const playerNumber = await getPlayerNumber(playerTag.className);
-      // console.log(playerNumber);
+      const playerNumber = getPlayerNumber(playerTag.className);
 
       const observer = new MutationObserver(async (mutations) => {
         for (const mutation of mutations) {
           if (mutation.type == "characterData") {
-            const classMutationOriginatedFrom =
-              mutation.target.parentNode.parentNode.parentNode.classList;
-
-            if (classMutationOriginatedFrom.contains("table-player-stack")) {
-              const oldStackSize = mutation.oldValue;
-              const currentStackSize = mutation.target.nodeValue;
-
-              //make sure callback comes from bet, not player winning pot
-              if (oldStackSize > currentStackSize) {
-                const playerBetTagToSearchFor = `.${playerNumber} .table-player-bet-value`;
-                const betValueTag = document.querySelector(
-                  playerBetTagToSearchFor
-                );
-
-                console.log(`${playerNumber} bets ${betValueTag.innerText}`);
-              }
-            }
+            getPlayerActionAndPrintToConsole(mutation, playerNumber);
           }
         }
       });
@@ -111,15 +92,29 @@ addButton.addEventListener("click", async () => {
       });
     }
   }
+}
 
-  // observer.observe(containerDiv, { childList: true });
+function getPlayerActionAndPrintToConsole(mutation, playerNumber) {
+  const classMutationOriginatedFrom =
+    mutation.target.parentNode.parentNode.parentNode.classList;
 
-  console.log("click");
-});
+  if (classMutationOriginatedFrom.contains("table-player-stack")) {
+    const oldStackSize = mutation.oldValue;
+    const currentStackSize = mutation.target.nodeValue;
 
-async function getPlayerNumber(playerTagClassName) {
+    //make sure callback comes from bet, not player winning pot
+    if (oldStackSize > currentStackSize) {
+      const playerBetTagToSearchFor = `.${playerNumber} .table-player-bet-value`;
+      const betValueTag = document.querySelector(playerBetTagToSearchFor);
+
+      console.log(`${playerNumber} bets ${betValueTag.innerText}`);
+    }
+  }
+}
+
+function getPlayerNumber(playerTagClassName) {
   const classNameTokens = playerTagClassName.split(" ");
-  return Promise.resolve(classNameTokens[1]);
+  return classNameTokens[1];
 }
 
 chrome.runtime.sendMessage({ message: "testtt from content" }, (response) => {
