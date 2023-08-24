@@ -59,6 +59,32 @@ window.onload = function () {
 
 addButton.addEventListener("click", async () => {
   console.log("clickk");
+  let tagsForPlayersInHand = Array.from(
+    document.querySelectorAll(".seats .table-player")
+  ).filter(
+    (playerTag) =>
+      !playerTag.className.includes("table-player-seat") &&
+      !playerTag.className.includes("fold")
+  );
+
+  const classNamesArray = tagsForPlayersInHand.map(
+    (playerTag) => playerTag.className
+  );
+
+  const playerWhoBet = "table-player-7";
+  let lastPlayerWhoBet = "";
+  for (let i = 0; i < classNamesArray.length; i++) {
+    if (classNamesArray[i].includes(playerWhoBet)) {
+      lastPlayerWhoBet =
+        i == 0
+          ? classNamesArray[tagsForPlayersInHand.length - 1]
+          : classNamesArray[i - 1];
+    }
+  }
+
+  console.log(lastPlayerWhoBet);
+
+  console.log("-------");
 });
 
 function addObserverToPlayerTags() {
@@ -78,6 +104,31 @@ function addObserverToPlayerTags() {
         for (const mutation of mutations) {
           if (mutation.type == "characterData") {
             getPlayerActionAndPrintToConsole(mutation, playerNumber);
+          } else if (
+            mutation.type === "attributes" &&
+            mutation.attributeName === "class"
+          ) {
+            const divElementToSeeIfPlayerChecked = //looking for checks
+              mutation.target.childNodes.length > 2
+                ? mutation.target.childNodes.item(2).className
+                : "N/A";
+
+            const targetElement = mutation.target;
+            const classList = targetElement.getAttribute("class"); // for looking for folds/winners
+
+            if (
+              classList.includes("fold") &&
+              !classList.includes("decision-current")
+            ) {
+              console.log(playerNumber + " has folded");
+            } else if (classList.includes("winner")) {
+              console.log(playerNumber + " has won, hand ended");
+            } else if (
+              divElementToSeeIfPlayerChecked.includes("check") &&
+              !classList.includes("decision-current")
+            ) {
+              console.log(playerNumber + " has checked");
+            }
           }
         }
       });
@@ -106,10 +157,62 @@ function getPlayerActionAndPrintToConsole(mutation, playerNumber) {
     if (oldStackSize > currentStackSize) {
       const playerBetTagToSearchFor = `.${playerNumber} .table-player-bet-value`;
       const betValueTag = document.querySelector(playerBetTagToSearchFor);
+      const betValue = betValueTag.innerText;
 
-      console.log(`${playerNumber} bets ${betValueTag.innerText}`);
+      const actionType = determineIfBetRaiseOrcall(playerNumber, betValue);
+
+      console.log(`${playerNumber} ${actionType} ${betValueTag.innerText}`);
     }
   }
+}
+
+function determineIfBetRaiseOrcall(playerWhoJustBet, newBet) {
+  let tagsForPlayersInHand = Array.from(
+    document.querySelectorAll(".seats .table-player")
+  ).filter(
+    (playerTag) =>
+      !playerTag.className.includes("table-player-seat") &&
+      !playerTag.className.includes("fold")
+  );
+
+  const classNamesArray = tagsForPlayersInHand.map(
+    (playerTag) => playerTag.className
+  );
+
+  const playerWhoBet = playerWhoJustBet;
+  let lastPlayerWhoBet = "";
+  for (let i = 0; i < classNamesArray.length; i++) {
+    if (classNamesArray[i].includes(playerWhoBet)) {
+      lastPlayerWhoBet =
+        i == 0
+          ? classNamesArray[tagsForPlayersInHand.length - 1]
+          : classNamesArray[i - 1];
+    }
+  }
+
+  lastPlayerWhoBet = getPlayerNumber(lastPlayerWhoBet);
+
+  //get last players bet
+  const playerBetTagToSearchFor = `.${lastPlayerWhoBet} .table-player-bet-value`;
+  const lastBetValueTag = document.querySelector(playerBetTagToSearchFor);
+
+  const lastBetValue = lastBetValueTag ? lastBetValueTag.innerText : "N/A";
+
+  const newBetValue = parseInt(newBet);
+
+  let actionType = "";
+
+  if (lastBetValue.includes("check")) {
+    actionType = "bets";
+  } else if (lastBetValue == "N/A") {
+    actionType = "bets";
+  } else if (newBetValue > parseInt(lastBetValue)) {
+    actionType = "raises";
+  } else if (parseInt(lastBetValue) == newBetValue) {
+    actionType = "calls";
+  }
+
+  return actionType;
 }
 
 function getPlayerNumber(playerTagClassName) {
