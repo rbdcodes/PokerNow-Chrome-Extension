@@ -1,12 +1,12 @@
 const elem = document.createElement("div");
-// elem.appendChild(document.createTextNode("test"));
 elem.classList.add("actionContainer");
-
 const addButton = document.createElement("button");
 addButton.textContent = "add";
 addButton.id = "addButton";
 
 elem.appendChild(addButton);
+
+const observedElements = new Set();
 
 window.onload = function () {
   // Your code here
@@ -31,23 +31,22 @@ window.onload = function () {
         const potClassName =
           mutation.target.parentNode.parentNode.parentNode.className;
 
-        const communityCardsTag = await document.querySelector(
-          ".table-cards.run-1"
-        );
+        const communityCardsTag = document.querySelector(".table-cards.run-1");
         const numberOfCommunityCards = communityCardsTag.childElementCount
           ? communityCardsTag.childNodes.length
           : -1;
 
-        if (
+        const handEndedPreflop =
           potClassName.includes("add-on") &&
           numberOfCommunityCards == -1 &&
-          mutation.target.nodeValue == 0
-        ) {
+          mutation.target.nodeValue == 0;
+
+        const handEndedPostFlop =
+          potClassName.includes("main-value") && mutation.target.nodeValue == 0;
+
+        if (handEndedPreflop) {
           console.log("hand ended during preflop");
-        } else if (
-          potClassName.includes("main-value") &&
-          mutation.target.nodeValue == 0
-        ) {
+        } else if (handEndedPostFlop) {
           console.log("hand ended from postFlop");
         }
       }
@@ -70,43 +69,47 @@ addButton.addEventListener("click", async () => {
   ).filter((playerTag) => !playerTag.className.includes("table-player-seat"));
 
   for (const playerTag of playerTags) {
-    // if (!playerTag.className.includes("table-player-seat")) {
-    const playerNumber = await getPlayerNumber(playerTag.className);
-    // console.log(playerNumber);
+    if (
+      !playerTag.className.includes("table-player-seat") &&
+      !observedElements.has(playerTag)
+    ) {
+      observedElements.add(playerTag);
+      const playerNumber = await getPlayerNumber(playerTag.className);
+      // console.log(playerNumber);
 
-    const observer = new MutationObserver(async (mutations) => {
-      for (const mutation of mutations) {
-        if (mutation.type == "characterData") {
-          const classMutationOriginatedFrom =
-            mutation.target.parentNode.parentNode.parentNode.classList;
+      const observer = new MutationObserver(async (mutations) => {
+        for (const mutation of mutations) {
+          if (mutation.type == "characterData") {
+            const classMutationOriginatedFrom =
+              mutation.target.parentNode.parentNode.parentNode.classList;
 
-          if (classMutationOriginatedFrom.contains("table-player-stack")) {
-            const oldStackSize = mutation.oldValue;
-            const currentStackSize = mutation.target.nodeValue;
+            if (classMutationOriginatedFrom.contains("table-player-stack")) {
+              const oldStackSize = mutation.oldValue;
+              const currentStackSize = mutation.target.nodeValue;
 
-            //make sure callback comes from bet, not player winning pot
-            if (oldStackSize > currentStackSize) {
-              const playerBetTagToSearchFor = `.${playerNumber} .table-player-bet-value`;
-              const betValueTag = document.querySelector(
-                playerBetTagToSearchFor
-              );
+              //make sure callback comes from bet, not player winning pot
+              if (oldStackSize > currentStackSize) {
+                const playerBetTagToSearchFor = `.${playerNumber} .table-player-bet-value`;
+                const betValueTag = document.querySelector(
+                  playerBetTagToSearchFor
+                );
 
-              console.log(`${playerNumber} bets ${betValueTag.innerText}`);
+                console.log(`${playerNumber} bets ${betValueTag.innerText}`);
+              }
             }
           }
         }
-      }
-    });
+      });
 
-    observer.observe(playerTag, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-      characterDataOldValue: true,
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-    // }
+      observer.observe(playerTag, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+        characterDataOldValue: true,
+        attributes: true,
+        attributeFilter: ["class"],
+      });
+    }
   }
 
   // observer.observe(containerDiv, { childList: true });
