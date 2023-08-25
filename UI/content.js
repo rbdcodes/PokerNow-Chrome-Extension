@@ -228,11 +228,76 @@ function getPlayerActionAndPrintToConsole(mutation, playerNumber) {
       const betValue = betValueTag.innerText;
 
       const actionType = determineIfBetRaiseOrcall(playerNumber, betValue);
-      lastPlayerActionType = actionType;
+      lastPlayerActionType = actionType.actionType; //global variable for recognizing action ending checks
 
-      console.log(`${playerNumber} ${actionType} ${betValueTag.innerText}`);
+      const isPostflop = determineStreet();
+      const lastPlayerBet = actionType.lastPlayerBet;
+      const mainPot = scrapeMainPot();
+      const totalPot = scrapeTotalPot();
+
+      if (isPostflop) {
+        if (actionType.actionType === "raises") {
+          const deadMoney = calculateDeadMoney(
+            lastPlayerBet,
+            betValue,
+            totalPot
+          );
+
+          const raisePercentage = calculateRaisePercentage(
+            deadMoney,
+            betValue,
+            lastPlayerBet
+          );
+
+          console.log(`${playerNumber} raises by ${raisePercentage}%`);
+        } else if (actionType.actionType === "bets") {
+          const betAmount = parseInt(totalPot) - parseInt(mainPot);
+          const betPercentageOfPot = Math.round((betAmount / mainPot) * 100);
+
+          console.log(`${playerNumber} bets by ${betPercentageOfPot}%`);
+        }
+      }
+
+      console.log(
+        `mainPot is: ${mainPot} totalPot is: ${totalPot} lastBet: ${lastPlayerBet}`
+      );
+
+      console.log(
+        `${playerNumber} ${actionType.actionType} ${betValueTag.innerText} isPostflop: ${isPostflop}`
+      );
     }
   }
+}
+
+function calculateRaisePercentage(deadMoney, betValue, lastPlayerBet) {
+  const raiseAmount = parseInt(betValue) - parseInt(lastPlayerBet);
+  const raisePercentage = (raiseAmount / deadMoney) * 100;
+  return Math.round(raisePercentage);
+}
+
+function scrapeMainPot() {
+  const mainPotTag = document.querySelector(".table-pot-size .main-value");
+  const mainPotValue = mainPotTag.innerText;
+  return mainPotValue;
+}
+
+function scrapeTotalPot() {
+  const totalPotTag = document.querySelector(".add-on-container .chips-value");
+  const totalPotValue = totalPotTag.innerText;
+  return totalPotValue;
+}
+
+function calculateDeadMoney(lastPlayerBet, betValue, totalPot) {
+  lastPlayerBet = lastPlayerBet === "N/A" ? 0 : lastPlayerBet;
+  const raiseAmount = parseInt(betValue) - parseInt(lastPlayerBet);
+  const deadMoneyWithCall = parseInt(totalPot) - raiseAmount;
+  return deadMoneyWithCall;
+}
+
+function determineStreet() {
+  const communityCardsTag = document.querySelector(".table-cards.run-1");
+  const numberOfCommunityCards = communityCardsTag.childElementCount;
+  return numberOfCommunityCards > 0;
 }
 
 function determineIfBetRaiseOrcall(playerWhoJustBet, newBet) {
@@ -281,7 +346,7 @@ function determineIfBetRaiseOrcall(playerWhoJustBet, newBet) {
     actionType = "calls";
   }
 
-  return actionType;
+  return { actionType: actionType, lastPlayerBet: lastBetValue };
 }
 
 function getPlayerNumber(playerTagClassName) {
