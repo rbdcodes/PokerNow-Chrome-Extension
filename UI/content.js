@@ -7,6 +7,7 @@ addButton.id = "addButton";
 elem.appendChild(addButton);
 
 const observedElements = new Set();
+let lastPlayerActionType = "N/A";
 
 window.onload = function () {
   // Your code here
@@ -17,9 +18,10 @@ window.onload = function () {
   //find pot
   const potTag = document.querySelector(".table-pot-size");
 
-  const observer = new MutationObserver(async (mutations) => {
+  const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       if (mutation.type == "characterData") {
+        // add way to recognize action ending check here
         const potClassName =
           mutation.target.parentNode.parentNode.parentNode.className;
 
@@ -48,6 +50,41 @@ window.onload = function () {
   });
 
   observer.observe(potTag, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+    characterDataOldValue: true,
+    attributes: true,
+    attributeFilter: ["class"],
+  });
+
+  const boardRunOutTag = document.querySelector(".table-cards.run-1");
+
+  //add another mutation observer here to recogniize when cards are added
+  const communityCardObserver = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      if (mutation.type == "childList") {
+        const endOfHand = mutation.removedNodes.length > 0 ? true : false;
+
+        let lastCommunityCardDealtDiv = "";
+        let numberOfCommunityCards = "";
+
+        if (endOfHand === false) {
+          console.log(`last action is: ${lastPlayerActionType}`);
+
+          lastCommunityCardDealtDiv = mutation.addedNodes[0].previousSibling;
+          numberOfCommunityCards = mutation.target.childNodes.length;
+        }
+
+        if (numberOfCommunityCards > 3 && lastPlayerActionType === "check") {
+          const playerWhoEndedAction = getLastPlayerInPosition();
+          console.log(`${playerWhoEndedAction} ended action with check`);
+        }
+      }
+    }
+  });
+
+  communityCardObserver.observe(boardRunOutTag, {
     childList: true,
     subtree: true,
     characterData: true,
@@ -87,6 +124,35 @@ addButton.addEventListener("click", async () => {
   console.log("-------");
 });
 
+function getLastPlayerInPosition() {
+  const playerTags = document.querySelectorAll(".seats .table-player");
+
+  const playerTagsArray = Array.from(playerTags).filter(
+    (player) =>
+      !player.className.includes("table-player-seat") &&
+      !player.className.includes("fold")
+  );
+
+  let pLength = playerTagsArray.length;
+
+  //in case first person is current decision, can always track last person (person who checked)
+  let lastPlayer = playerTagsArray.at(pLength - 1).className;
+  let currentPlayerTag = "test";
+
+  for (let i = 0; i < pLength; i++) {
+    const cPlayer = playerTagsArray.at(i).className;
+    if (cPlayer.includes("decision-current")) {
+      currentPlayerTag = lastPlayer;
+      break;
+    }
+    lastPlayer = playerTagsArray.at(i).className;
+  }
+
+  const currentPlayerNameTokens = currentPlayerTag.split(" ");
+  const playerNumber = currentPlayerNameTokens[1];
+  return playerNumber;
+}
+
 function addObserverToPlayerTags() {
   const playerTags = Array.from(
     document.querySelectorAll(".seats .table-player")
@@ -100,7 +166,7 @@ function addObserverToPlayerTags() {
       observedElements.add(playerTag);
       const playerNumber = getPlayerNumber(playerTag.className);
 
-      const observer = new MutationObserver(async (mutations) => {
+      const observer = new MutationObserver((mutations) => {
         for (const mutation of mutations) {
           if (mutation.type == "characterData") {
             getPlayerActionAndPrintToConsole(mutation, playerNumber);
@@ -120,6 +186,7 @@ function addObserverToPlayerTags() {
               classList.includes("fold") &&
               !classList.includes("decision-current")
             ) {
+              lastPlayerActionType = "fold";
               console.log(playerNumber + " has folded");
             } else if (classList.includes("winner")) {
               console.log(playerNumber + " has won, hand ended");
@@ -127,6 +194,7 @@ function addObserverToPlayerTags() {
               divElementToSeeIfPlayerChecked.includes("check") &&
               !classList.includes("decision-current")
             ) {
+              lastPlayerActionType = "check";
               console.log(playerNumber + " has checked");
             }
           }
@@ -160,6 +228,7 @@ function getPlayerActionAndPrintToConsole(mutation, playerNumber) {
       const betValue = betValueTag.innerText;
 
       const actionType = determineIfBetRaiseOrcall(playerNumber, betValue);
+      lastPlayerActionType = actionType;
 
       console.log(`${playerNumber} ${actionType} ${betValueTag.innerText}`);
     }
