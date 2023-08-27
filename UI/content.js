@@ -38,10 +38,16 @@ window.onload = function () {
         const handEndedPostFlop =
           potClassName.includes("main-value") && mutation.target.nodeValue == 0;
 
-        if (handEndedPreflop) {
+        const mutationComesFromNormalValue =
+          mutation.target.parentNode.className.includes("normal-value");
+
+        if (handEndedPreflop && mutationComesFromNormalValue) {
           addObserverToPlayerTags();
           console.log("hand ended during preflop");
-        } else if (handEndedPostFlop) {
+          console.log(
+            `mutation: ${mutation.target.nodeValue} mutationClass: ${mutation.target.parentNode.className}`
+          );
+        } else if (handEndedPostFlop && mutationComesFromNormalValue) {
           addObserverToPlayerTags();
           console.log("hand ended from postFlop");
         }
@@ -159,65 +165,69 @@ function addObserverToPlayerTags() {
   ).filter((playerTag) => !playerTag.className.includes("table-player-seat"));
 
   for (const playerTag of playerTags) {
-    if (
-      !playerTag.className.includes("table-player-seat") &&
-      !observedElements.has(playerTag)
-    ) {
-      observedElements.add(playerTag);
+    if (!playerTag.className.includes("table-player-seat")) {
       const playerNumber = getPlayerNumber(playerTag.className);
+      if (!observedElements.has(playerNumber)) {
+        console.log(`playerTag for mutationObserver is ${playerNumber} `);
+        observedElements.add(playerNumber);
 
-      const observer = new MutationObserver((mutations) => {
-        for (const mutation of mutations) {
-          if (mutation.type == "characterData") {
-            getPlayerActionAndPrintToConsole(mutation, playerNumber);
-          } else if (
-            mutation.type === "attributes" &&
-            mutation.attributeName === "class"
-          ) {
-            const divElementToSeeIfPlayerChecked = //looking for checks
-              mutation.target.childNodes.length > 2
-                ? mutation.target.childNodes.item(2).className
-                : "N/A";
-
-            const targetElement = mutation.target;
-            const classList = targetElement.getAttribute("class"); // for looking for folds/winners
-
-            if (
-              classList.includes("fold") &&
-              !classList.includes("decision-current")
-            ) {
-              lastPlayerActionType = "fold";
-              console.log(playerNumber + " has folded");
-            } else if (classList.includes("winner")) {
-              console.log(playerNumber + " has won, hand ended");
+        const observer = new MutationObserver((mutations) => {
+          for (const mutation of mutations) {
+            if (mutation.type == "characterData") {
+              getPlayerActionAndPrintToConsole(mutation, playerNumber);
             } else if (
-              divElementToSeeIfPlayerChecked.includes("check") &&
-              !classList.includes("decision-current")
+              mutation.type === "attributes" &&
+              mutation.attributeName === "class"
             ) {
-              lastPlayerActionType = "check";
-              console.log(playerNumber + " has checked");
+              const divElementToSeeIfPlayerChecked = //looking for checks
+                mutation.target.childNodes.length > 2
+                  ? mutation.target.childNodes.item(2).className
+                  : "N/A";
+
+              const targetElement = mutation.target;
+              const classList = targetElement.getAttribute("class"); // for looking for folds/winners
+
+              if (
+                classList.includes("fold") &&
+                !classList.includes("decision-current")
+              ) {
+                lastPlayerActionType = "fold";
+                console.log(playerNumber + " has folded");
+              } else if (classList.includes("winner")) {
+                console.log(playerNumber + " has won, hand ended");
+              } else if (
+                divElementToSeeIfPlayerChecked.includes("check") &&
+                !classList.includes("decision-current")
+              ) {
+                lastPlayerActionType = "check";
+                console.log(playerNumber + " has checked");
+              }
             }
           }
-        }
-      });
+        });
 
-      observer.observe(playerTag, {
-        childList: true,
-        subtree: true,
-        characterData: true,
-        characterDataOldValue: true,
-        attributes: true,
-        attributeFilter: ["class"],
-      });
+        observer.observe(playerTag, {
+          childList: true,
+          subtree: true,
+          characterData: true,
+          characterDataOldValue: true,
+          attributes: true,
+          attributeFilter: ["class"],
+        });
+      }
     }
   }
 }
 
+let mostRecentBetOrRaisePercentage = -1;
 function getPlayerActionAndPrintToConsole(mutation, playerNumber) {
   const classMutationOriginatedFrom =
     mutation.target.parentNode.parentNode.parentNode.classList;
 
-  if (classMutationOriginatedFrom.contains("table-player-stack")) {
+  if (
+    classMutationOriginatedFrom.contains("table-player-stack") &&
+    mutation.target.parentNode.className.includes("normal-value")
+  ) {
     const oldStackSize = mutation.oldValue;
     const currentStackSize = mutation.target.nodeValue;
 
@@ -249,30 +259,58 @@ function getPlayerActionAndPrintToConsole(mutation, playerNumber) {
             lastPlayerBet
           );
 
+          mostRecentBetOrRaisePercentage = raisePercentage;
           console.log(`${playerNumber} raises by ${raisePercentage}%`);
         } else if (actionType.actionType === "bets") {
           const betAmount = parseInt(totalPot) - parseInt(mainPot);
           const betPercentageOfPot = Math.round((betAmount / mainPot) * 100);
 
+          mostRecentBetOrRaisePercentage = betPercentageOfPot;
           console.log(`${playerNumber} bets by ${betPercentageOfPot}%`);
+        } else if (actionType.actionType === "calls") {
+          console.log(
+            `${playerNumber} calls ${mostRecentBetOrRaisePercentage}%`
+          );
         }
+      } else {
+        console.log(
+          `mutation comes from: ${mutation.target.parentNode.className}`
+        );
+        console.log(
+          `${playerNumber} ${actionType.actionType} ${betValueTag.innerText} isPostflop: ${isPostflop}`
+        );
       }
-
-      console.log(
-        `mainPot is: ${mainPot} totalPot is: ${totalPot} lastBet: ${lastPlayerBet}`
-      );
-
-      console.log(
-        `${playerNumber} ${actionType.actionType} ${betValueTag.innerText} isPostflop: ${isPostflop}`
-      );
     }
   }
 }
 
 function calculateRaisePercentage(deadMoney, betValue, lastPlayerBet) {
+  deadMoney = deadMoney.includes("BB")
+    ? getValueFromBBTag(deadMoney)
+    : deadMoney;
   const raiseAmount = parseInt(betValue) - parseInt(lastPlayerBet);
   const raisePercentage = (raiseAmount / deadMoney) * 100;
   return Math.round(raisePercentage);
+}
+
+function getValueFromBBTag(BBTag) {
+  const inputString = BBTag;
+  const regex = /(\d+)([A-Za-z]+)/;
+
+  const matches = inputString.match(regex);
+
+  if (matches) {
+    const numericPart = matches[1];
+    const stringPart = matches[2];
+
+    console.log("Numeric Part:", numericPart); // Output: 30
+    console.log("String Part:", stringPart); // Output: BB
+
+    return numericPart;
+  } else {
+    console.log("String format not recognized.");
+    return "failed conversion";
+  }
 }
 
 function scrapeMainPot() {
