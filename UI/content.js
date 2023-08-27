@@ -422,16 +422,16 @@ function getPlayerNumber(playerTagClassName) {
   return classNameTokens[1];
 }
 
-chrome.runtime.sendMessage({ message: "testtt from content" }, (response) => {
-  console.log(`from runTime sendMessage: ${response.message}`);
-});
+// chrome.runtime.sendMessage({ message: "testtt from content" }, (response) => {
+//   console.log(`from runTime sendMessage: ${response.message}`);
+// });
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log(`From onMessage!: ${message}`);
-  // const newComponent = document.createElement("div");
-  // newComponent.className = "component27";
-  // newComponent.textContent = "lul";
-  // elem.appendChild(newComponent);
+// chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+//   console.log(`From onMessage!: ${message}`);
+//   // const newComponent = document.createElement("div");
+//   // newComponent.className = "component27";
+//   // newComponent.textContent = "lul";
+//   // elem.appendChild(newComponent);
 
-  sendResponse({ message: "response from content js" });
-});
+//   sendResponse({ message: "response from content js" });
+// });
