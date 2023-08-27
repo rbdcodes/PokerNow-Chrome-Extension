@@ -93,6 +93,48 @@ window.onload = function () {
     attributes: true,
     attributeFilter: ["class"],
   });
+
+  const observerForDetermingStreetChanges = new MutationObserver(
+    (mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type == "childList") {
+          const endOfHand = mutation.removedNodes.length > 0 ? true : false;
+          const addedNodes = mutation.addedNodes;
+
+          let lastCommunityCardDealtDiv = "";
+          let numberOfCommunityCards = "";
+
+          if (endOfHand === false) {
+            lastCommunityCardDealtDiv = mutation.addedNodes[0].previousSibling;
+            numberOfCommunityCards = mutation.target.childNodes.length;
+
+            const lastCard = lastCommunityCardDealtDiv
+              ? lastCommunityCardDealtDiv.innerText
+              : "N/A";
+
+            if (lastCard == "N/A") {
+              console.log(" ");
+              console.log("Entered Flop");
+              console.log(" ");
+            } else if (numberOfCommunityCards > 3) {
+              console.log(" ");
+              console.log("Next Street");
+              console.log(" ");
+            }
+          }
+        }
+      }
+    }
+  );
+
+  observerForDetermingStreetChanges.observe(boardRunOutTag, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+    characterDataOldValue: true,
+    attributes: true,
+    attributeFilter: ["class"],
+  });
 };
 
 addButton.addEventListener("click", async () => {
