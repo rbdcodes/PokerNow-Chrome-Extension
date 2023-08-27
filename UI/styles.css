@@ -11,7 +11,59 @@
   flex-direction: row;
 }
 
-.component27 {
-  border: 1px solid #ccc;
+.callsElement {
+  background-color: rgb(66, 66, 156);
+  border-radius: 5px; /* Adds rounded corners */
   padding: 5px;
+  color: white;
+  font-size: 12px; /* Adjust the font size as needed */
+  min-width: 37px !important;
+  min-height: 16px !important;
+}
+
+.raisesElement {
+  background-color: lightcoral;
+  border-radius: 5px; /* Adds rounded corners */
+  padding: 5px;
+  color: white;
+  font-size: 12px; /* Adjust the font size as needed */
+  min-width: 37px !important;
+  min-height: 16px !important;
+}
+
+.betsElement {
+  background-color: orange;
+  border-radius: 5px; /* Adds rounded corners */
+  padding: 5px;
+  color: white;
+  font-size: 12px; /* Adjust the font size as needed */
+  min-width: 37px !important;
+  min-height: 16px !important;
+}
+
+.checkElement {
+  border: 1px solid #ccc;
+  background-color: gray;
+  border-radius: 2px; /* Adds rounded corners */
+  padding: 2px;
+  color: white;
+  font-size: 12px; /* Adjust the font size as needed */
+}
+
+.foldElement {
+  border: 1px solid #ccc;
+  background-color: #ff0000;
+  border-radius: 2px; /* Adds rounded corners */
+  padding: 2px;
+  color: white;
+  font-size: 12px; /* Adjust the font size as needed */
+}
+
+.streetElement {
+  border: 1px solid #ccc;
+  background-color: #ccc;
+  border-radius: 2px; /* Adds rounded corners */
+  padding: 2px;
+  color: white;
+  font-size: 12px; /* Adjust the font size as needed */
 }

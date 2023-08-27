@@ -1,10 +1,52 @@
-const elem = document.createElement("div");
-elem.classList.add("actionContainer");
+const actionContainer = document.createElement("div");
+actionContainer.classList.add("actionContainer");
 const addButton = document.createElement("button");
 addButton.textContent = "add";
 addButton.id = "addButton";
 
-elem.appendChild(addButton);
+actionContainer.appendChild(addButton);
+
+addButton.addEventListener("click", async () => {
+  console.log("clickk");
+
+  addActionToPlayerBar("table-player-6", "street", "");
+
+  console.log("-------");
+});
+
+function addActionToPlayerBar(playerNumber, actionType, actionValue) {
+  const parentElement = document.querySelector(`.${playerNumber}`);
+
+  const hasActionChildren =
+    parentElement.querySelector(".actionContainer") !== null;
+
+  if (!hasActionChildren) {
+    const newActionContainer = document.createElement("div");
+    newActionContainer.classList.add("actionContainer");
+    parentElement.appendChild(newActionContainer);
+  }
+
+  const playerActionContainer = parentElement.querySelector(".actionContainer");
+
+  const actionClass = `${actionType}Element`;
+  let actionTypeText = getActionText(actionType);
+
+  const actionDiv = document.createElement("div");
+  const actionText = `${actionTypeText} ${actionValue}`;
+  actionDiv.textContent = actionText;
+  actionDiv.classList.add(actionClass);
+
+  playerActionContainer.appendChild(actionDiv);
+}
+
+function getActionText(actionType) {
+  if (actionType == "check") {
+    return "X";
+  } else if (actionType == "street") {
+    return "||";
+  }
+  return actionType.charAt(0).toUpperCase();
+}
 
 const observedElements = new Set();
 let lastPlayerActionType = "N/A";
@@ -13,7 +55,7 @@ window.onload = function () {
   // Your code here
   console.log("yum");
   let containerDiv = document.querySelector(".table-player.table-player-1");
-  containerDiv.appendChild(elem);
+  containerDiv.appendChild(actionContainer);
 
   //find pot
   const potTag = document.querySelector(".table-pot-size");
@@ -44,9 +86,11 @@ window.onload = function () {
         if (handEndedPreflop && mutationComesFromNormalValue) {
           addObserverToPlayerTags();
           console.log("hand ended during preflop");
+          clearActionTagsFromAllPlayers();
         } else if (handEndedPostFlop && mutationComesFromNormalValue) {
           addObserverToPlayerTags();
           console.log("hand ended from postFlop");
+          clearActionTagsFromAllPlayers();
         }
       }
     }
@@ -79,6 +123,7 @@ window.onload = function () {
 
         if (numberOfCommunityCards > 3 && lastPlayerActionType === "check") {
           const playerWhoEndedAction = getLastPlayerInPosition();
+          addActionToPlayerBar(playerWhoEndedAction, "check", "");
           console.log(`${playerWhoEndedAction} ended action with check`);
         }
       }
@@ -116,10 +161,12 @@ window.onload = function () {
               console.log(" ");
               console.log("Entered Flop");
               console.log(" ");
+              addStreetTagToAllPlayersInHand();
             } else if (numberOfCommunityCards > 3) {
               console.log(" ");
               console.log("Next Street");
               console.log(" ");
+              addStreetTagToAllPlayersInHand();
             }
           }
         }
@@ -137,35 +184,57 @@ window.onload = function () {
   });
 };
 
-addButton.addEventListener("click", async () => {
-  console.log("clickk");
-  let tagsForPlayersInHand = Array.from(
-    document.querySelectorAll(".seats .table-player")
-  ).filter(
-    (playerTag) =>
-      !playerTag.className.includes("table-player-seat") &&
-      !playerTag.className.includes("fold")
+function addStreetTagToAllPlayersInHand() {
+  const playerTags = document.querySelectorAll(".seats .table-player");
+
+  const playerTagsArray = Array.from(playerTags).filter(
+    (player) =>
+      !player.className.includes("table-player-seat") &&
+      !player.className.includes("fold")
   );
 
-  const classNamesArray = tagsForPlayersInHand.map(
-    (playerTag) => playerTag.className
+  let pLength = playerTagsArray.length;
+
+  for (let i = 0; i < pLength; i++) {
+    const cPlayer = playerTagsArray.at(i).className;
+    const playerNumber = getPlayerNumber(cPlayer);
+    console.log(`adding action to ${playerNumber}`);
+    addActionToPlayerBar(playerNumber, "street", "");
+  }
+}
+
+function clearActionTagsFromAllPlayers() {
+  const playerTags = document.querySelectorAll(".seats .table-player");
+
+  const playerTagsArray = Array.from(playerTags).filter(
+    (player) => !player.className.includes("table-player-seat")
   );
 
-  const playerWhoBet = "table-player-7";
-  let lastPlayerWhoBet = "";
-  for (let i = 0; i < classNamesArray.length; i++) {
-    if (classNamesArray[i].includes(playerWhoBet)) {
-      lastPlayerWhoBet =
-        i == 0
-          ? classNamesArray[tagsForPlayersInHand.length - 1]
-          : classNamesArray[i - 1];
-    }
+  let pLength = playerTagsArray.length;
+
+  for (let i = 0; i < pLength; i++) {
+    const cPlayer = playerTagsArray.at(i).className;
+    const playerNumber = getPlayerNumber(cPlayer);
+    console.log(`adding action to ${playerNumber}`);
+    clearActionsFromPlayerBar(playerNumber);
+  }
+}
+
+function clearActionsFromPlayerBar(playerNumber) {
+  const parentElement = document.querySelector(`.${playerNumber}`);
+
+  const hasActionChildren =
+    parentElement.querySelector(".actionContainer") !== null;
+
+  if (!hasActionChildren) {
+    const newActionContainer = document.createElement("div");
+    newActionContainer.classList.add("actionContainer");
+    parentElement.appendChild(newActionContainer);
   }
 
-  console.log(lastPlayerWhoBet);
-
-  console.log("-------");
-});
+  const playerActionContainer = parentElement.querySelector(".actionContainer");
+  playerActionContainer.innerHTML = ""; //clear children
+}
 
 function getLastPlayerInPosition() {
   const playerTags = document.querySelectorAll(".seats .table-player");
@@ -229,7 +298,9 @@ function addObserverToPlayerTags() {
               ) {
                 lastPlayerActionType = "fold";
                 console.log(playerNumber + " has folded");
+                addActionToPlayerBar(playerNumber, "fold", "");
               } else if (classList.includes("winner")) {
+                clearActionTagsFromAllPlayers();
                 console.log(playerNumber + " has won, hand ended");
               } else if (
                 divElementToSeeIfPlayerChecked.includes("check") &&
@@ -237,6 +308,7 @@ function addObserverToPlayerTags() {
               ) {
                 lastPlayerActionType = "check";
                 console.log(playerNumber + " has checked");
+                addActionToPlayerBar(playerNumber, "check", "");
               }
             }
           }
@@ -297,20 +369,32 @@ function getPlayerActionAndPrintToConsole(mutation, playerNumber) {
 
           mostRecentBetOrRaisePercentage = raisePercentage;
           console.log(`${playerNumber} raises by ${raisePercentage}%`);
+          addActionToPlayerBar(playerNumber, "raises", `${raisePercentage}%`);
         } else if (actionType.actionType === "bets") {
           const betAmount = totalPot - mainPot;
           const betPercentageOfPot = Math.round((betAmount / mainPot) * 100);
 
           mostRecentBetOrRaisePercentage = betPercentageOfPot;
           console.log(`${playerNumber} bets by ${betPercentageOfPot}%`);
+          addActionToPlayerBar(playerNumber, "bets", `${betPercentageOfPot}%`);
         } else if (actionType.actionType === "calls") {
           console.log(
             `${playerNumber} calls ${mostRecentBetOrRaisePercentage}%`
+          );
+          addActionToPlayerBar(
+            playerNumber,
+            "calls",
+            `${mostRecentBetOrRaisePercentage}%`
           );
         }
       } else {
         console.log(
           `${playerNumber} ${actionType.actionType} ${betValueTag.innerText} isPostflop: ${isPostflop}`
+        );
+        addActionToPlayerBar(
+          playerNumber,
+          actionType.actionType,
+          betValueTag.innerText
         );
       }
     }
@@ -321,26 +405,6 @@ function calculateRaisePercentage(deadMoney, betValue, lastPlayerBet) {
   const raiseAmount = betValue - lastPlayerBet;
   const raisePercentage = (raiseAmount / deadMoney) * 100;
   return Math.round(raisePercentage);
-}
-
-function getValueFromBBTag(BBTag) {
-  const inputString = BBTag;
-  const regex = /(\d+)([A-Za-z]+)/;
-
-  const matches = inputString.match(regex);
-
-  if (matches) {
-    const numericPart = matches[1];
-    const stringPart = matches[2];
-
-    console.log("Numeric Part:", numericPart); // Output: 30
-    console.log("String Part:", stringPart); // Output: BB
-
-    return numericPart;
-  } else {
-    console.log("String format not recognized.");
-    return "failed conversion";
-  }
 }
 
 function scrapeMainPot() {
