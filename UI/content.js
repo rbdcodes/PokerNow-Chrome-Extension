@@ -44,9 +44,6 @@ window.onload = function () {
         if (handEndedPreflop && mutationComesFromNormalValue) {
           addObserverToPlayerTags();
           console.log("hand ended during preflop");
-          console.log(
-            `mutation: ${mutation.target.nodeValue} mutationClass: ${mutation.target.parentNode.className}`
-          );
         } else if (handEndedPostFlop && mutationComesFromNormalValue) {
           addObserverToPlayerTags();
           console.log("hand ended from postFlop");
@@ -76,8 +73,6 @@ window.onload = function () {
         let numberOfCommunityCards = "";
 
         if (endOfHand === false) {
-          console.log(`last action is: ${lastPlayerActionType}`);
-
           lastCommunityCardDealtDiv = mutation.addedNodes[0].previousSibling;
           numberOfCommunityCards = mutation.target.childNodes.length;
         }
@@ -168,7 +163,6 @@ function addObserverToPlayerTags() {
     if (!playerTag.className.includes("table-player-seat")) {
       const playerNumber = getPlayerNumber(playerTag.className);
       if (!observedElements.has(playerNumber)) {
-        console.log(`playerTag for mutationObserver is ${playerNumber} `);
         observedElements.add(playerNumber);
 
         const observer = new MutationObserver((mutations) => {
@@ -235,15 +229,15 @@ function getPlayerActionAndPrintToConsole(mutation, playerNumber) {
     if (oldStackSize > currentStackSize) {
       const playerBetTagToSearchFor = `.${playerNumber} .table-player-bet-value`;
       const betValueTag = document.querySelector(playerBetTagToSearchFor);
-      const betValue = betValueTag.innerText;
+      const betValue = parseFloat(betValueTag.innerText);
 
       const actionType = determineIfBetRaiseOrcall(playerNumber, betValue);
       lastPlayerActionType = actionType.actionType; //global variable for recognizing action ending checks
 
       const isPostflop = determineStreet();
-      const lastPlayerBet = actionType.lastPlayerBet;
-      const mainPot = scrapeMainPot();
-      const totalPot = scrapeTotalPot();
+      const lastPlayerBet = parseFloat(actionType.lastPlayerBet);
+      const mainPot = parseFloat(scrapeMainPot());
+      const totalPot = parseFloat(scrapeTotalPot());
 
       if (isPostflop) {
         if (actionType.actionType === "raises") {
@@ -262,7 +256,7 @@ function getPlayerActionAndPrintToConsole(mutation, playerNumber) {
           mostRecentBetOrRaisePercentage = raisePercentage;
           console.log(`${playerNumber} raises by ${raisePercentage}%`);
         } else if (actionType.actionType === "bets") {
-          const betAmount = parseInt(totalPot) - parseInt(mainPot);
+          const betAmount = totalPot - mainPot;
           const betPercentageOfPot = Math.round((betAmount / mainPot) * 100);
 
           mostRecentBetOrRaisePercentage = betPercentageOfPot;
@@ -274,9 +268,6 @@ function getPlayerActionAndPrintToConsole(mutation, playerNumber) {
         }
       } else {
         console.log(
-          `mutation comes from: ${mutation.target.parentNode.className}`
-        );
-        console.log(
           `${playerNumber} ${actionType.actionType} ${betValueTag.innerText} isPostflop: ${isPostflop}`
         );
       }
@@ -285,10 +276,7 @@ function getPlayerActionAndPrintToConsole(mutation, playerNumber) {
 }
 
 function calculateRaisePercentage(deadMoney, betValue, lastPlayerBet) {
-  deadMoney = deadMoney.includes("BB")
-    ? getValueFromBBTag(deadMoney)
-    : deadMoney;
-  const raiseAmount = parseInt(betValue) - parseInt(lastPlayerBet);
+  const raiseAmount = betValue - lastPlayerBet;
   const raisePercentage = (raiseAmount / deadMoney) * 100;
   return Math.round(raisePercentage);
 }
@@ -327,8 +315,8 @@ function scrapeTotalPot() {
 
 function calculateDeadMoney(lastPlayerBet, betValue, totalPot) {
   lastPlayerBet = lastPlayerBet === "N/A" ? 0 : lastPlayerBet;
-  const raiseAmount = parseInt(betValue) - parseInt(lastPlayerBet);
-  const deadMoneyWithCall = parseInt(totalPot) - raiseAmount;
+  const raiseAmount = betValue - lastPlayerBet;
+  const deadMoneyWithCall = totalPot - raiseAmount;
   return deadMoneyWithCall;
 }
 
@@ -370,7 +358,7 @@ function determineIfBetRaiseOrcall(playerWhoJustBet, newBet) {
 
   const lastBetValue = lastBetValueTag ? lastBetValueTag.innerText : "N/A";
 
-  const newBetValue = parseInt(newBet);
+  const newBetValue = parseFloat(newBet);
 
   let actionType = "";
 
@@ -378,9 +366,9 @@ function determineIfBetRaiseOrcall(playerWhoJustBet, newBet) {
     actionType = "bets";
   } else if (lastBetValue == "N/A") {
     actionType = "bets";
-  } else if (newBetValue > parseInt(lastBetValue)) {
+  } else if (newBetValue > parseFloat(lastBetValue)) {
     actionType = "raises";
-  } else if (parseInt(lastBetValue) == newBetValue) {
+  } else if (parseFloat(lastBetValue) == newBetValue) {
     actionType = "calls";
   }
 
