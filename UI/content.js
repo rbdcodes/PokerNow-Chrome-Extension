@@ -49,15 +49,19 @@ function getActionText(actionType) {
 }
 
 const observedElements = new Set();
+const playerSeatsAndNames = new Map();
 let lastPlayerActionType = "N/A";
 
-window.onload = function () {
+window.onload = async function () {
   // Your code here
-  console.log("yum");
-  let containerDiv = document.querySelector(".table-player.table-player-1");
-  containerDiv.appendChild(actionContainer);
+  // console.log("yum");
+  // let containerDiv = document.querySelector(".table-player.table-player-1");
+  // containerDiv.appendChild(actionContainer);
 
   //find pot
+
+  await delay(3000);
+
   const potTag = document.querySelector(".table-pot-size");
 
   const observer = new MutationObserver((mutations) => {
@@ -85,11 +89,12 @@ window.onload = function () {
 
         if (handEndedPreflop && mutationComesFromNormalValue) {
           addObserverToPlayerTags();
-          console.log("hand ended during preflop");
+          // console.log("hand ended during preflop");
+          removeObserverFromPlayersWhoLeft();
           clearActionTagsFromAllPlayers();
         } else if (handEndedPostFlop && mutationComesFromNormalValue) {
           addObserverToPlayerTags();
-          console.log("hand ended from postFlop");
+          // console.log("hand ended from postFlop");
           clearActionTagsFromAllPlayers();
         }
       }
@@ -104,6 +109,12 @@ window.onload = function () {
     attributes: true,
     attributeFilter: ["class"],
   });
+
+  function delay(milliseconds) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, milliseconds);
+    });
+  }
 
   const boardRunOutTag = document.querySelector(".table-cards.run-1");
 
@@ -124,7 +135,7 @@ window.onload = function () {
         if (numberOfCommunityCards > 3 && lastPlayerActionType === "check") {
           const playerWhoEndedAction = getLastPlayerInPosition();
           addActionToPlayerBar(playerWhoEndedAction, "check", "");
-          console.log(`${playerWhoEndedAction} ended action with check`);
+          // console.log(`${playerWhoEndedAction} ended action with check`);
         }
       }
     }
@@ -158,14 +169,14 @@ window.onload = function () {
               : "N/A";
 
             if (lastCard == "N/A") {
-              console.log(" ");
-              console.log("Entered Flop");
-              console.log(" ");
+              // console.log(" ");
+              // console.log("Entered Flop");
+              // console.log(" ");
               addStreetTagToAllPlayersInHand();
             } else if (numberOfCommunityCards > 3) {
-              console.log(" ");
-              console.log("Next Street");
-              console.log(" ");
+              // console.log(" ");
+              // console.log("Next Street");
+              // console.log(" ");
               addStreetTagToAllPlayersInHand();
             }
           }
@@ -184,6 +195,48 @@ window.onload = function () {
   });
 };
 
+function removeObserverFromPlayersWhoLeft() {
+  const playerTags = document.querySelectorAll(".seats .table-player");
+
+  const playerTagsArray = Array.from(playerTags).filter(
+    (player) => !player.className.includes("table-player-seat")
+  );
+
+  const mapForCurrentPlayerNames = new Map();
+  const currentPlayerSet = new Set();
+  playerTagsArray.forEach((player) => {
+    const pTag = getPlayerNumber(player.className);
+    currentPlayerSet.add(pTag);
+    mapForCurrentPlayerNames[pTag] = getPlayerName(player);
+  });
+
+  let currentPlayerElems = [];
+  currentPlayerSet.forEach((entry) => currentPlayerElems.push(entry));
+
+  console.log(`current set: ${currentPlayerElems}`);
+
+  let setElems = [];
+
+  observedElements.forEach((entry) => {
+    setElems.push(entry);
+    if (!currentPlayerSet.has(entry)) {
+      observedElements.delete(entry);
+    } else {
+      //get player name here and see if it matches with current name
+      const oldPlayerName = playerSeatsAndNames[entry];
+      const currentPlayerName = mapForCurrentPlayerNames[entry];
+
+      if (oldPlayerName != currentPlayerName) {
+        observedElements.delete(entry);
+      }
+    }
+  });
+
+  console.log("set:" + setElems);
+
+  setElems = [];
+}
+
 function addStreetTagToAllPlayersInHand() {
   const playerTags = document.querySelectorAll(".seats .table-player");
 
@@ -198,7 +251,7 @@ function addStreetTagToAllPlayersInHand() {
   for (let i = 0; i < pLength; i++) {
     const cPlayer = playerTagsArray.at(i).className;
     const playerNumber = getPlayerNumber(cPlayer);
-    console.log(`adding action to ${playerNumber}`);
+    // console.log(`adding action to ${playerNumber}`);
     addActionToPlayerBar(playerNumber, "street", "");
   }
 }
@@ -215,7 +268,7 @@ function clearActionTagsFromAllPlayers() {
   for (let i = 0; i < pLength; i++) {
     const cPlayer = playerTagsArray.at(i).className;
     const playerNumber = getPlayerNumber(cPlayer);
-    console.log(`adding action to ${playerNumber}`);
+    // console.log(`adding action to ${playerNumber}`);
     clearActionsFromPlayerBar(playerNumber);
   }
 }
@@ -273,8 +326,11 @@ function addObserverToPlayerTags() {
   for (const playerTag of playerTags) {
     if (!playerTag.className.includes("table-player-seat")) {
       const playerNumber = getPlayerNumber(playerTag.className);
+      const pName = getPlayerName(playerTag);
+      console.log(`seat: ${playerNumber} pName: ${pName}`);
       if (!observedElements.has(playerNumber)) {
         observedElements.add(playerNumber);
+        playerSeatsAndNames[playerNumber] = pName;
 
         const observer = new MutationObserver((mutations) => {
           for (const mutation of mutations) {
@@ -297,17 +353,17 @@ function addObserverToPlayerTags() {
                 !classList.includes("decision-current")
               ) {
                 lastPlayerActionType = "fold";
-                console.log(playerNumber + " has folded");
+                // console.log(playerNumber + " has folded");
                 addActionToPlayerBar(playerNumber, "fold", "");
               } else if (classList.includes("winner")) {
                 clearActionTagsFromAllPlayers();
-                console.log(playerNumber + " has won, hand ended");
+                // console.log(playerNumber + " has won, hand ended");
               } else if (
                 divElementToSeeIfPlayerChecked.includes("check") &&
                 !classList.includes("decision-current")
               ) {
                 lastPlayerActionType = "check";
-                console.log(playerNumber + " has checked");
+                // console.log(playerNumber + " has checked");
                 addActionToPlayerBar(playerNumber, "check", "");
               }
             }
@@ -325,6 +381,12 @@ function addObserverToPlayerTags() {
       }
     }
   }
+}
+
+function getPlayerName(playerTag) {
+  //
+  const nameTag = playerTag.querySelector(".table-player-name");
+  return nameTag.innerText ? nameTag.innerText : "Name not found";
 }
 
 let mostRecentBetOrRaisePercentage = -1;
@@ -368,19 +430,19 @@ function getPlayerActionAndPrintToConsole(mutation, playerNumber) {
           );
 
           mostRecentBetOrRaisePercentage = raisePercentage;
-          console.log(`${playerNumber} raises by ${raisePercentage}%`);
+          // console.log(`${playerNumber} raises by ${raisePercentage}%`);
           addActionToPlayerBar(playerNumber, "raises", `${raisePercentage}%`);
         } else if (actionType.actionType === "bets") {
           const betAmount = totalPot - mainPot;
           const betPercentageOfPot = Math.round((betAmount / mainPot) * 100);
 
           mostRecentBetOrRaisePercentage = betPercentageOfPot;
-          console.log(`${playerNumber} bets by ${betPercentageOfPot}%`);
+          // console.log(`${playerNumber} bets by ${betPercentageOfPot}%`);
           addActionToPlayerBar(playerNumber, "bets", `${betPercentageOfPot}%`);
         } else if (actionType.actionType === "calls") {
-          console.log(
-            `${playerNumber} calls ${mostRecentBetOrRaisePercentage}%`
-          );
+          // console.log(
+          //   `${playerNumber} calls ${mostRecentBetOrRaisePercentage}%`
+          // );
           addActionToPlayerBar(
             playerNumber,
             "calls",
@@ -388,9 +450,9 @@ function getPlayerActionAndPrintToConsole(mutation, playerNumber) {
           );
         }
       } else {
-        console.log(
-          `${playerNumber} ${actionType.actionType} ${betValueTag.innerText} isPostflop: ${isPostflop}`
-        );
+        // console.log(
+        //   `${playerNumber} ${actionType.actionType} ${betValueTag.innerText} isPostflop: ${isPostflop}`
+        // );
         addActionToPlayerBar(
           playerNumber,
           actionType.actionType,
