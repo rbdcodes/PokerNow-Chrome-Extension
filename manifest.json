@@ -3,7 +3,6 @@
   "name": "PopulateUI",
   "version": "1.0.1",
   "permissions": [
-    "background",
     "tabs",
     "webRequest",
     "nativeMessaging",
@@ -18,10 +17,5 @@
       "css": ["UI/styles.css"]
     }
   ],
-
-  "background": {
-    "service_worker": "UI/background.js",
-    "type": "module"
-  },
   "host_permissions": ["*://*.pokernow.club/*"]
 }
