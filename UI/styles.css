@@ -16,9 +16,11 @@
   border-radius: 5px; /* Adds rounded corners */
   padding: 5px;
   color: white;
-  font-size: 12px; /* Adjust the font size as needed */
-  min-width: 37px !important;
-  min-height: 16px !important;
+  font-size: 1.8lvh; /* Adjust the font size as needed */
+  vertical-align: middle;
+  text-align: left;
+  aspect-ratio: 33 / 12;
+  width: 23%;
 }
 
 .raisesElement {
@@ -26,9 +28,11 @@
   border-radius: 5px; /* Adds rounded corners */
   padding: 5px;
   color: white;
-  font-size: 12px; /* Adjust the font size as needed */
-  min-width: 37px !important;
-  min-height: 16px !important;
+  font-size: 1.8lvh; /* Adjust the font size as needed */
+  vertical-align: middle;
+  text-align: left;
+  aspect-ratio: 33 / 12;
+  width: 23%;
 }
 
 .betsElement {
@@ -36,18 +40,22 @@
   border-radius: 5px; /* Adds rounded corners */
   padding: 5px;
   color: white;
-  font-size: 12px; /* Adjust the font size as needed */
-  min-width: 37px !important;
-  min-height: 16px !important;
+  font-size: 1.8lvh; /* Adjust the font size as needed */
+  vertical-align: middle;
+  text-align: left;
+  aspect-ratio: 33 / 12;
+  width: 23%;
 }
 
 .checkElement {
   border: 1px solid #ccc;
   background-color: gray;
   border-radius: 2px; /* Adds rounded corners */
-  padding: 2px;
-  color: white;
-  font-size: 12px; /* Adjust the font size as needed */
+  font-size: 1.8lvh; /* Adjust the font size as needed */
+  vertical-align: middle;
+  text-align: left;
+  aspect-ratio: 33 / 12;
+  width: 23%;
 }
 
 .foldElement {
@@ -56,7 +64,11 @@
   border-radius: 2px; /* Adds rounded corners */
   padding: 2px;
   color: white;
-  font-size: 12px; /* Adjust the font size as needed */
+  font-size: 1.8lvh; /* Adjust the font size as needed */
+  vertical-align: middle;
+  text-align: left;
+  aspect-ratio: 33 / 12;
+  width: 23%;
 }
 
 .streetElement {
@@ -65,5 +77,9 @@
   border-radius: 2px; /* Adds rounded corners */
   padding: 2px;
   color: white;
-  font-size: 12px; /* Adjust the font size as needed */
+  font-size: 1.8lvh; /* Adjust the font size as needed */
+  vertical-align: middle;
+  text-align: left;
+  aspect-ratio: 33 / 12;
+  width: 23%;
 }
