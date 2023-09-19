@@ -5,6 +5,8 @@ The goal of this app is to display the past betting actions from players in real
 
 This is useful for multitabling or remembering what your opponents did online.
 
+![pokerAppdemo](https://github.com/rbdcodes/PokerNow-Chrome-Extension/assets/70783787/e861ecf7-273d-4e98-a34c-dcd2ae97446d)
+
 <h2> How To Navigate Repo </h2>
 The UI folder contains the content script for the chrome extension and the primary code for the extension.
 
